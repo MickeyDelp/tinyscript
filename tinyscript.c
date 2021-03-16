@@ -986,18 +986,33 @@ ArrayAssign(Val* ary, Val ix)
 {
     int err;
     Val val;
-    do {
-        if (ix < 0 || ix >= ary[0]) {
-            return OutOfBounds();
-        }
-        NextToken();
-        err = ParseExpr(&val);
-        if (err != TS_ERR_OK) {
-            return err;
-        }
-        ary[ix + 1] = val;
-        ix++;
-    } while (curToken == ',');
+
+	do {
+		if (ix < 0 || ix >= ary[0]) {
+			return OutOfBounds();
+		}
+		NextToken();
+		if (curToken == TOK_STRING) {
+			int maxstrlen = (ary[0] - ix) * sizeof(Val) - 1;
+			if (maxstrlen > StringGetLen(token)) {
+				maxstrlen = StringGetLen(token);
+			}
+			const char* ptr = StringGetPtr(token);
+			char* charary = (char*)(ary + ix);
+			for (int cix = 0; cix < maxstrlen; cix++, ptr++) {
+				charary[cix] = *ptr;
+			}
+			charary[maxstrlen] = '\0';
+			NextToken();
+			return TS_ERR_OK;
+		}
+		err = ParseExpr(&val);
+		if (err != TS_ERR_OK) {
+			return err;
+		}
+		ary[ix + 1] = val;
+		ix++;
+	} while (curToken == ',');
     return TS_ERR_OK;
 }
 
